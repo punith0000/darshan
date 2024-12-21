@@ -3,9 +3,7 @@ package com.example.google_auth;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +18,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class HomePage extends AppCompatActivity {
 
-    Button log_out;
+    private GoogleSignInClient googleSignInClient;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -28,29 +26,31 @@ public class HomePage extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_home_page);
+
+        // Set padding for system bars
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        log_out=findViewById(R.id.log_out);
+        // Initialize the log-out button and GoogleSignInClient
+        Button logOutButton = findViewById(R.id.log_out);
 
-        GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN);
-        mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
-            Toast.makeText(this, "Logged out Successfully!", Toast.LENGTH_SHORT).show();
-        });
+        GoogleSignInOptions googleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
 
+        googleSignInClient = GoogleSignIn.getClient(this, googleSignInOptions);
 
-        log_out.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+        // Set up the log-out button click listener
+        logOutButton.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            googleSignInClient.signOut().addOnCompleteListener(task -> {
+                startActivity(new Intent(HomePage.this, MainActivity.class));
                 finish();
-
-            }
+            });
         });
-
     }
 }
